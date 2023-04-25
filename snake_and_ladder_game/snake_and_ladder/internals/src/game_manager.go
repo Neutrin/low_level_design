@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	queue "github.com/enriquebris/goconcurrentqueue"
 	"github.com/neutrin/snake_and_ladder/internals/src/boards"
 	"github.com/neutrin/snake_and_ladder/internals/src/dices"
 	"github.com/neutrin/snake_and_ladder/internals/src/players"
@@ -12,50 +13,80 @@ import (
 
 type GameManager struct {
 	board       boards.Board
-	players     []*players.Player
+	players     *queue.FIFO
 	playerRanks []*players.Player
 	isRunning   bool
-	Dice        dices.Dice
-	rules       rules_game.GameRules
+	/* IMPROVEMENT
+	#1 option requirement have a slice of dices
+	DONE
+	*/
+	Dices []dices.Dice
+	rules rules_game.GameRules
+	/*
+		This field is for the optional requirement number 3
+
+	*/
+	isMultiWinner bool
 }
 
-func NewGameManager(board boards.Board, players []*players.Player, dice dices.Dice,
+func NewGameManager(board boards.Board, players []*players.Player, dice []dices.Dice,
 	rules rules_game.GameRules) *GameManager {
+	fifo := queue.NewFIFO()
+	for _, curPlayer := range players {
+		fifo.Enqueue(curPlayer)
+	}
 	return &GameManager{
 		board:   board,
-		players: players,
+		players: fifo,
 		//playerRanks: curPlayerList,
-		isRunning: true,
-		Dice:      dice,
-		rules:     rules,
+		isRunning:     true,
+		Dices:         dice,
+		rules:         rules,
+		isMultiWinner: false,
 	}
 
+}
+
+func (m *GameManager) IsMultiWinner() {
+	m.isMultiWinner = true
 }
 
 func (m *GameManager) Play() error {
 	var (
-		err           error
-		playerPointer int
-		curPlayer     *players.Player
-		diceFace      int64
-		msg           string
-		isWinning     bool
+		err       error
+		curPlayer *players.Player
+		diceFace  int64
+		msg       string
+		isWinning bool
 	)
 	if !m.isRunning {
 		return fmt.Errorf("game not running")
 	}
-	if len(m.players) == 0 {
+	if m.players.GetLen() == 0 {
 		return fmt.Errorf("game empty")
 	}
 	m.playerRanks = make([]*players.Player, 0)
 
 	for m.isRunning {
-		curPlayer = m.players[playerPointer]
+		curEle, _ := m.players.Dequeue()
+		curPlayer, _ = curEle.(*players.Player)
+		/*IMPROVEMENT
 
-		if diceFace, msg, err = m.rules.RollDice(m.Dice); err != nil {
-			fmt.Println(" error = ", err.Error())
-			m.isRunning = false
-			break
+		if dice was a slice here it would have been better
+		to just run a loop and print their messages accordingly
+		now this will also be based on the requirements if they wanted this or not
+
+		4> OPTIONAL REQUIREMENT COULD BE EASILY ADDED HERE IF THERE WERE CHANGES IN
+		HTHE RULES OF THE GAME IE THAT 3 TIMES MORE THAN 6 COULD RESUME IN NOTHING
+		HAPPENING
+
+		*/
+		for _, curDice := range m.Dices {
+			if diceFace, msg, err = m.rules.RollDice(curDice); err != nil {
+				fmt.Println(" error = ", err.Error())
+				m.isRunning = false
+				break
+			}
 		}
 		fmt.Println(msg)
 		time.Sleep(1 * time.Second)
@@ -73,10 +104,18 @@ func (m *GameManager) Play() error {
 		} else if isWinning {
 			fmt.Printf(" player = %s won\n", curPlayer.GetName())
 			m.playerRanks = append(m.playerRanks, curPlayer)
-			m.isRunning = false
-			break
+
+			/*IMPROVEMENT
+			#OPTIONAL REQUIREMENT 3 : DONE
+			*/
+			if !m.isMultiWinner || (m.isMultiWinner && m.players.GetLen() == 1) {
+				m.isRunning = false
+				break
+			}
+			continue
+
 		}
-		playerPointer = (playerPointer + 1) % len(m.players)
+		m.players.Enqueue(curPlayer)
 	}
 	return err
 }

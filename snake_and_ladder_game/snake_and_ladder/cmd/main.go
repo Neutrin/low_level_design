@@ -63,7 +63,16 @@ func main() {
 		curPlayer = players.NewPlayer(name, players.NewWidget("black"))
 		playersList = append(playersList, curPlayer)
 	}
-	if board, err = boards.NewReactangularBoard(10, 10, playersList); err != nil {
+	/*
+		OPTIONAL REQUIREMENT #2 : DONE
+	*/
+	rows := 0
+	cols := 0
+	fmt.Println("please enter number of rows")
+	fmt.Scan(&rows)
+	fmt.Println("please enter number of cols")
+	fmt.Scan(&cols)
+	if board, err = boards.NewReactangularBoard(rows, cols, playersList); err != nil {
 		fmt.Println("error in board intialization = %s", err.Error())
 	}
 	if err = board.AddLadders(ladders); err != nil {
@@ -75,8 +84,9 @@ func main() {
 	}
 	fmt.Println("snakes added")
 
-	gameManager := src.NewGameManager(board, playersList, dices.NewSimpleDice(1, 6),
+	gameManager := src.NewGameManager(board, playersList, []dices.Dice{dices.NewSimpleDice(1, 6)},
 		rules_game.NewSimpleGameRules())
+	gameManager.IsMultiWinner()
 	if err = gameManager.Play(); err != nil {
 		fmt.Println(" error while playing games = ", err.Error())
 	}
