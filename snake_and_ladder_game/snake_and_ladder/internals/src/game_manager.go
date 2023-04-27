@@ -6,9 +6,8 @@ import (
 
 	queue "github.com/enriquebris/goconcurrentqueue"
 	"github.com/neutrin/snake_and_ladder/internals/src/boards"
-	"github.com/neutrin/snake_and_ladder/internals/src/dices"
+	"github.com/neutrin/snake_and_ladder/internals/src/dice_service"
 	"github.com/neutrin/snake_and_ladder/internals/src/players"
-	"github.com/neutrin/snake_and_ladder/internals/src/rules_game"
 )
 
 type GameManager struct {
@@ -20,8 +19,7 @@ type GameManager struct {
 	#1 option requirement have a slice of dices
 	DONE
 	*/
-	Dices []dices.Dice
-	rules rules_game.GameRules
+	Dices []dice_service.DiceService
 	/*
 		This field is for the optional requirement number 3
 
@@ -29,8 +27,7 @@ type GameManager struct {
 	isMultiWinner bool
 }
 
-func NewGameManager(board boards.Board, players []*players.Player, dice []dices.Dice,
-	rules rules_game.GameRules) *GameManager {
+func NewGameManager(board boards.Board, players []*players.Player, dice []dice_service.DiceService) *GameManager {
 	fifo := queue.NewFIFO()
 	for _, curPlayer := range players {
 		fifo.Enqueue(curPlayer)
@@ -41,7 +38,6 @@ func NewGameManager(board boards.Board, players []*players.Player, dice []dices.
 		//playerRanks: curPlayerList,
 		isRunning:     true,
 		Dices:         dice,
-		rules:         rules,
 		isMultiWinner: false,
 	}
 
@@ -82,7 +78,7 @@ func (m *GameManager) Play() error {
 
 		*/
 		for _, curDice := range m.Dices {
-			if diceFace, msg, err = m.rules.RollDice(curDice); err != nil {
+			if diceFace, msg, err = curDice.RollDice(); err != nil {
 				fmt.Println(" error = ", err.Error())
 				m.isRunning = false
 				break

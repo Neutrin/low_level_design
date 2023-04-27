@@ -78,6 +78,15 @@ func (r *ReactangularBoard) MovePlayer(playerId int, diceCount int) (error, stri
 	if curPos+diceCount <= r.rows*r.cols {
 		msg = fmt.Sprintf(" moving from %d to %d \n", curPos, curPos+diceCount)
 		r.playerPos[playerId] = curPos + diceCount
+		nextPos := curPos + diceCount
+		if snakeTail, snakeExists := r.snakesPos[nextPos]; snakeExists {
+			msg += fmt.Sprintf(" snake found moving from %d to %d \n", nextPos, snakeTail)
+			r.playerPos[playerId] = snakeTail
+		}
+		if ladderHead, ladderExists := r.ladderPos[nextPos]; ladderExists {
+			msg += fmt.Sprintf(" ladder found moving from %d to %d \n", nextPos, ladderHead)
+			r.playerPos[playerId] = ladderHead
+		}
 
 	} else {
 		msg = fmt.Sprintln(" not moving as out of bound")

@@ -1,7 +1,6 @@
 package dices
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 )
@@ -22,9 +21,14 @@ func NewSimpleDice(min int, max int) *SimpleDice {
 	}
 }
 
-func (s *SimpleDice) RollDice() (int64, error) {
-	if s.rand == nil {
-		return 0, fmt.Errorf(" souce not intialized")
-	}
-	return int64(s.rand.Intn(s.max-s.min) + s.min), nil
+func (s *SimpleDice) MinFace() int {
+	return s.min
+}
+
+func (s *SimpleDice) MaxFace() int {
+	return s.max
+}
+
+func (s *SimpleDice) Source() *rand.Rand {
+	return s.rand
 }

@@ -5,10 +5,10 @@ import (
 
 	"github.com/neutrin/snake_and_ladder/internals/src"
 	"github.com/neutrin/snake_and_ladder/internals/src/boards"
+	"github.com/neutrin/snake_and_ladder/internals/src/dice_service"
 	"github.com/neutrin/snake_and_ladder/internals/src/dices"
 	"github.com/neutrin/snake_and_ladder/internals/src/elements"
 	"github.com/neutrin/snake_and_ladder/internals/src/players"
-	"github.com/neutrin/snake_and_ladder/internals/src/rules_game"
 )
 
 func main() {
@@ -83,9 +83,8 @@ func main() {
 		fmt.Println(" error in adding snakes ", err.Error())
 	}
 	fmt.Println("snakes added")
-
-	gameManager := src.NewGameManager(board, playersList, []dices.Dice{dices.NewSimpleDice(1, 6)},
-		rules_game.NewSimpleGameRules())
+	simpleDice := dices.NewSimpleDice(1, 6)
+	gameManager := src.NewGameManager(board, playersList, []dice_service.DiceService{dice_service.NewSimpleDiceService(simpleDice)})
 	gameManager.IsMultiWinner()
 	if err = gameManager.Play(); err != nil {
 		fmt.Println(" error while playing games = ", err.Error())
